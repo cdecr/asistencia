@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#187487" />
+  <title>Control de Asistencia CDE</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="late.css" />
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="./"><span class="logo">CDE</span><span><b>Control de Asistencia</b><small>Casa de las Estrellas</small></span></a><button id="logout" class="text-button hidden">Cerrar sesión</button></header>
+  <main>
+    <section id="login-view" class="view login-view">
+      <div class="welcome"><span class="eyebrow">Registro diario</span><h1>¡Hola, profe!</h1><p>Ingresa tu código interno para abrir la lista de tu grupo.</p></div>
+      <form id="login-form" class="card login-card"><label for="access-code">Código interno</label><div class="code-field"><input id="access-code" type="password" autocomplete="current-password" autocapitalize="characters" placeholder="Ej. XXX-0000-XX" required /><button id="toggle-code" type="button">Ver</button></div><p id="login-error" class="error" role="alert"></p><button id="login-button" class="primary" type="submit">Ingresar</button><p class="privacy">Tu código se valida de forma privada y abre únicamente tu grupo.</p></form>
+    </section>
+    <section id="attendance-view" class="view hidden">
+      <div class="attendance-head"><div><span class="eyebrow">Asistencia diaria</span><h1 id="group-name"></h1><p id="teacher-name"></p></div><label class="date-box">Fecha<input id="attendance-date" type="date" required /></label></div>
+      <div class="academic-strip"><span id="school-year">Periodo pendiente</span><b id="block-week">Selecciona una fecha</b><span id="calendar-note"></span></div>
+      <div id="code-warning" class="code-warning hidden" role="status"></div>
+      <section class="progress-card"><div><b id="progress-text">0 de 0 estudiantes registrados</b><span id="progress-percent">0%</span></div><div class="progress-track"><i id="progress-bar"></i></div><div class="summary"><span class="present">Presentes <b id="present-count">0</b></span><span class="late">Tardías <b id="late-count">0</b></span><span class="absent">Ausentes <b id="absent-count">0</b></span><button id="mark-all" type="button">Marcar todos presentes</button></div></section>
+      <form id="attendance-form"><div id="student-list" class="student-list"></div><div id="form-error" class="error form-error" role="alert"></div><div class="sticky-submit"><div><b id="submit-summary">Completa la lista</b><small>Revisa antes de enviar</small></div><button id="submit-attendance" class="primary" type="submit" disabled>Enviar asistencia</button></div></form>
+    </section>
+    <section id="success-view" class="view success-view hidden"><div class="success-icon">✓</div><span class="eyebrow">Registro completado</span><h1>Asistencia registrada correctamente.</h1><div id="success-details" class="card receipt"></div><p id="notification-status" class="notification"></p><button id="back-home" class="primary">Volver al inicio</button></section>
+  </main>
+  <dialog id="update-dialog"><form method="dialog"><h2>Asistencia ya registrada</h2><p>Ya existe una asistencia para este grupo en esta fecha. ¿Deseas actualizarla?</p><div><button value="cancel" class="secondary">No, conservar</button><button value="confirm" class="primary">Sí, actualizar</button></div></form></dialog>
+  <script src="config.js"></script><script src="app.js"></script>
+</body>
+</html>
