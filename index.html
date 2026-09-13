@@ -9,18 +9,38 @@
   <link rel="stylesheet" href="late.css" />
 </head>
 <body>
-  <header class="site-header"><a class="brand" href="./"><span class="logo">CDE</span><span><b>Control de Asistencia</b><small>Casa de las Estrellas</small></span></a><button id="logout" class="text-button hidden">Cerrar sesión</button></header>
+  <header class="site-header"><a class="brand" href="./"><img class="logo" src="logo-cde.png" alt="Casa de las Estrellas" /><span><b>Control de Asistencia</b><small>Casa de las Estrellas</small></span></a><button id="logout" class="text-button hidden">Cerrar sesión</button></header>
   <main>
     <section id="login-view" class="view login-view">
-      <div class="welcome"><span class="eyebrow">Registro diario</span><h1>¡Hola, profe!</h1><p>Ingresa tu código interno para abrir la lista de tu grupo.</p></div>
+      <div class="welcome"><img class="welcome-logo" src="logo-cde.png" alt="Casa de las Estrellas" /><span class="eyebrow">Registro diario</span><h1>Registro de Asistencia</h1><p>Ingresa tu código interno para continuar.</p></div>
       <form id="login-form" class="card login-card"><label for="access-code">Código interno</label><div class="code-field"><input id="access-code" type="password" autocomplete="current-password" autocapitalize="characters" placeholder="Ej. XXX-0000-XX" required /><button id="toggle-code" type="button">Ver</button></div><p id="login-error" class="error" role="alert"></p><button id="login-button" class="primary" type="submit">Ingresar</button><p class="privacy">Tu código se valida de forma privada y abre únicamente tu grupo.</p></form>
     </section>
     <section id="attendance-view" class="view hidden">
       <div class="attendance-head"><div><span class="eyebrow">Asistencia diaria</span><h1 id="group-name"></h1><p id="teacher-name"></p></div><label class="date-box">Fecha<input id="attendance-date" type="date" required /></label></div>
+      <section id="admin-tools" class="admin-tools hidden">
+        <label>Grado para registrar<select id="group-select"></select></label>
+        <details>
+          <summary>Marcar presentes desde foto/lista</summary>
+          <p>Pega aquí el texto copiado de la foto de la lista. La app marcará presentes los nombres que encuentre.</p>
+          <textarea id="photo-list-text" rows="5" placeholder="Pega aquí nombres o lista tomada de la foto"></textarea>
+          <button id="apply-photo-list" class="secondary" type="button">Marcar presentes encontrados</button>
+          <small id="photo-list-result"></small>
+        </details>
+      </section>
       <div class="academic-strip"><span id="school-year">Periodo pendiente</span><b id="block-week">Selecciona una fecha</b><span id="calendar-note"></span></div>
       <div id="code-warning" class="code-warning hidden" role="status"></div>
       <section class="progress-card"><div><b id="progress-text">0 de 0 estudiantes registrados</b><span id="progress-percent">0%</span></div><div class="progress-track"><i id="progress-bar"></i></div><div class="summary"><span class="present">Presentes <b id="present-count">0</b></span><span class="late">Tardías <b id="late-count">0</b></span><span class="absent">Ausentes <b id="absent-count">0</b></span><button id="mark-all" type="button">Marcar todos presentes</button></div></section>
       <form id="attendance-form"><div id="student-list" class="student-list"></div><div id="form-error" class="error form-error" role="alert"></div><div class="sticky-submit"><div><b id="submit-summary">Completa la lista</b><small>Revisa antes de enviar</small></div><button id="submit-attendance" class="primary" type="submit" disabled>Enviar asistencia</button></div></form>
+    </section>
+    <section id="kitchen-view" class="view hidden">
+      <div class="attendance-head"><div><span class="eyebrow">Resumen para cocina</span><h1>Cocina CDE</h1><p id="kitchen-user-name"></p></div><label class="date-box">Fecha<input id="kitchen-date" type="date" required /></label></div>
+      <section class="admin-tools">
+        <label>Grado<select id="kitchen-group-select"></select></label>
+        <button id="load-kitchen-summary" class="primary" type="button">Ver resumen</button>
+        <p>Este acceso es solo lectura. Muestra totales para comida y alergias según la asistencia ya registrada.</p>
+      </section>
+      <div id="kitchen-error" class="error form-error" role="alert"></div>
+      <section id="kitchen-summary" class="card receipt"></section>
     </section>
     <section id="success-view" class="view success-view hidden"><div class="success-icon">✓</div><span class="eyebrow">Registro completado</span><h1>Asistencia registrada correctamente.</h1><div id="success-details" class="card receipt"></div><p id="notification-status" class="notification"></p><button id="back-home" class="primary">Volver al inicio</button></section>
   </main>

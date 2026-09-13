@@ -1,3 +1,9 @@
 .late{background:#fff1c8;color:#795c10}
 .attendance-choice{grid-template-columns:repeat(3,1fr)}
 .code-warning{margin:-10px 0 18px;padding:13px 15px;border:1px solid #e7c76d;border-radius:13px;background:#fff6cf;color:#735a12;font-size:13px;font-weight:700}
+.admin-tools{margin:18px 0;padding:16px;border:1px solid #dce7e8;border-radius:18px;background:#fff;box-shadow:0 12px 36px rgba(26,65,72,.08);display:grid;gap:14px}
+.admin-tools label{display:grid;gap:6px;font-size:13px;font-weight:800;color:#64767a}
+.admin-tools select,.admin-tools textarea{width:100%;border:1px solid #b9cbce;border-radius:12px;padding:12px;background:#fff;color:#183036}
+.admin-tools summary{cursor:pointer;font-weight:900;color:#187487}
+.admin-tools p,.admin-tools small{display:block;margin:8px 0;color:#64767a;font-size:13px}
+.admin-tools textarea{resize:vertical;margin:8px 0}
