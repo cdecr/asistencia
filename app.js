@@ -5,6 +5,7 @@
   let session = null;
   let students = [];
   let pendingData = null;
+  let attendancePhoto = null;
 
   function configured() { return API.startsWith('https://script.google.com/') && API.endsWith('/exec'); }
 
@@ -86,6 +87,7 @@
       token: session.token,
       group: session.teacher.group,
       date: $('#attendance-date').value,
+      photo: attendancePhoto,
       records: [...document.querySelectorAll('.student-card')].map((card, index) => {
         const selected = card.querySelector('input:checked').value;
         const reason = card.querySelector('select').value;
@@ -99,6 +101,32 @@
         };
       })
     };
+  }
+
+  function readAttendancePhoto(file) {
+    attendancePhoto = null;
+    $('#attendance-photo-status').textContent = 'Opcional: sube una foto como respaldo del registro.';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      $('#attendance-photo-status').textContent = 'El archivo debe ser una imagen.';
+      $('#attendance-photo').value = '';
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      $('#attendance-photo-status').textContent = 'La foto es muy grande. Usa una imagen menor a 4 MB.';
+      $('#attendance-photo').value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      attendancePhoto = { name: file.name, mimeType: file.type, data: String(reader.result).split(',')[1] || '' };
+      $('#attendance-photo-status').textContent = `Foto lista: ${file.name}`;
+    };
+    reader.onerror = () => {
+      attendancePhoto = null;
+      $('#attendance-photo-status').textContent = 'No se pudo leer la foto. Intenta de nuevo.';
+    };
+    reader.readAsDataURL(file);
   }
 
   async function refreshCalendar() {
@@ -138,13 +166,16 @@
     $('#kitchen-error').textContent = '';
     try {
       const result = await api('kitchen', { token: session.token, date: $('#kitchen-date').value, group: $('#kitchen-group-select').value });
-      const rows = result.summaries.map(item => {
-        const allergies = item.allergyDetails?.length
-          ? `<ul>${item.allergyDetails.map(row => `<li><b>${escapeHtml(row.student)}</b>: ${escapeHtml(row.detail)}</li>`).join('')}</ul>`
-          : '<small>Sin alergias registradas para presentes/tardíos.</small>';
-        return `<div class="receipt-row"><span>${escapeHtml(item.group)}</span><b>${item.totalForKitchen} comidas · ${item.allergiesCount} alergias</b></div>${allergies}`;
+      const sections = (result.sections || []).map(section => {
+        const groups = section.groups.map(item => {
+          const allergies = item.allergyDetails?.length
+            ? `<ul>${item.allergyDetails.map(row => `<li><b>${escapeHtml(row.student)}</b>: ${escapeHtml(row.detail)}</li>`).join('')}</ul>`
+            : '<small>Sin alergias registradas para presentes/tardíos.</small>';
+          return `<div class="receipt-row"><span>${escapeHtml(item.group)}</span><b>${item.totalForKitchen} comidas · ${item.allergiesCount} alergias</b></div>${allergies}`;
+        }).join('');
+        return `<h2>${escapeHtml(section.section)}</h2><div class="receipt-row"><span>Total ${escapeHtml(section.section)}</span><b>${section.totalForKitchen} comidas</b></div><div class="receipt-row"><span>Alergias ${escapeHtml(section.section)}</span><b>${section.allergiesCount}</b></div>${groups}`;
       }).join('');
-      $('#kitchen-summary').innerHTML = `<div class="receipt-row"><span>Total para cocina</span><b>${result.totalForKitchen}</b></div><div class="receipt-row"><span>Total con alergias</span><b>${result.allergiesCount}</b></div>${rows || '<p>No hay asistencia registrada para esa fecha.</p>'}`;
+      $('#kitchen-summary').innerHTML = `<div class="receipt-row"><span>Total general para cocina</span><b>${result.totalForKitchen}</b></div><div class="receipt-row"><span>Total general con alergias</span><b>${result.allergiesCount}</b></div>${sections || '<p>No hay asistencia registrada para esa fecha.</p>'}`;
     } catch (error) {
       $('#kitchen-error').textContent = error.message;
     } finally {
@@ -164,7 +195,8 @@
       ['Ausentes', result.absent],
       ['Justificadas', result.justified],
       ['Cocina', `${result.kitchen?.totalForKitchen || 0} comidas`],
-      ['Alergias', result.kitchen?.allergiesCount || 0]
+      ['Alergias', result.kitchen?.allergiesCount || 0],
+      ['Foto', result.photoUrl ? 'Guardada en Drive' : 'No adjunta']
     ].map(([label, value]) => `<div class="receipt-row"><span>${label}</span><b>${value}</b></div>`).join('');
     $('#notification-status').textContent = '✓ Reporte enviado a Sandra y a la profesora. Sandra recibe el resumen para cocina.';
     show('success-view');
@@ -249,6 +281,7 @@
     $('#toggle-code').textContent = input.type === 'password' ? 'Ver' : 'Ocultar';
   });
   $('#group-select').addEventListener('change', event => loadGroup(event.target.value).catch(error => $('#form-error').textContent = error.message));
+  $('#attendance-photo').addEventListener('change', event => readAttendancePhoto(event.target.files?.[0]));
   $('#load-kitchen-summary').addEventListener('click', loadKitchenSummary);
   $('#kitchen-date').addEventListener('change', loadKitchenSummary);
   $('#kitchen-group-select').addEventListener('change', loadKitchenSummary);
@@ -290,6 +323,9 @@
     $('#access-code').value = '';
     $('#photo-list-text').value = '';
     $('#photo-list-result').textContent = '';
+    $('#attendance-photo').value = '';
+    attendancePhoto = null;
+    $('#attendance-photo-status').textContent = 'Opcional: sube una foto como respaldo del registro.';
     show('login-view');
   });
   $('#back-home').addEventListener('click', () => $('#logout').click());
