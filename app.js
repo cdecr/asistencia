@@ -105,7 +105,7 @@
 
   function readAttendancePhoto(file) {
     attendancePhoto = null;
-    $('#attendance-photo-status').textContent = 'Opcional: sube una foto como respaldo del registro.';
+    $('#attendance-photo-status').textContent = 'Sube una foto para leer nombres y marcar presentes automáticamente. Revisa antes de enviar.';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       $('#attendance-photo-status').textContent = 'El archivo debe ser una imagen.';
@@ -118,15 +118,34 @@
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       attendancePhoto = { name: file.name, mimeType: file.type, data: String(reader.result).split(',')[1] || '' };
-      $('#attendance-photo-status').textContent = `Foto lista: ${file.name}`;
+      $('#attendance-photo-status').textContent = `Leyendo foto: ${file.name}…`;
+      await readPhotoWithOcr();
     };
     reader.onerror = () => {
       attendancePhoto = null;
       $('#attendance-photo-status').textContent = 'No se pudo leer la foto. Intenta de nuevo.';
     };
     reader.readAsDataURL(file);
+  }
+
+  async function readPhotoWithOcr() {
+    if (!attendancePhoto) return;
+    try {
+      const result = await api('ocrPhoto', { token: session.token, group: session.teacher.group, photo: attendancePhoto });
+      const matchedIds = new Set((result.matched || []).map(item => item.id));
+      document.querySelectorAll('.student-card').forEach((card, index) => {
+        if (!matchedIds.has(students[index].id)) return;
+        card.querySelector('input[value="P"]').checked = true;
+        card.classList.remove('is-absent');
+        card.querySelector('.absence-fields').classList.add('hidden');
+      });
+      updateProgress();
+      $('#attendance-photo-status').textContent = `Foto leída: ${result.matched?.length || 0} presentes detectados. Quedan ${result.notFound?.length || 0} por revisar.`;
+    } catch (error) {
+      $('#attendance-photo-status').textContent = `${error.message} La foto quedará guardada como respaldo, pero revisa la asistencia manualmente.`;
+    }
   }
 
   async function refreshCalendar() {
@@ -325,7 +344,7 @@
     $('#photo-list-result').textContent = '';
     $('#attendance-photo').value = '';
     attendancePhoto = null;
-    $('#attendance-photo-status').textContent = 'Opcional: sube una foto como respaldo del registro.';
+    $('#attendance-photo-status').textContent = 'Sube una foto para leer nombres y marcar presentes automáticamente. Revisa antes de enviar.';
     show('login-view');
   });
   $('#back-home').addEventListener('click', () => $('#logout').click());
