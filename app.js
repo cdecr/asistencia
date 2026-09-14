@@ -5,7 +5,6 @@
   let session = null;
   let students = [];
   let pendingData = null;
-  let attendancePhoto = null;
 
   function configured() { return API.startsWith('https://script.google.com/') && API.endsWith('/exec'); }
 
@@ -87,7 +86,6 @@
       token: session.token,
       group: session.teacher.group,
       date: $('#attendance-date').value,
-      photo: attendancePhoto,
       records: [...document.querySelectorAll('.student-card')].map((card, index) => {
         const selected = card.querySelector('input:checked').value;
         const reason = card.querySelector('select').value;
@@ -101,51 +99,6 @@
         };
       })
     };
-  }
-
-  function readAttendancePhoto(file) {
-    attendancePhoto = null;
-    $('#attendance-photo-status').textContent = 'Sube una foto para leer nombres y marcar presentes automáticamente. Revisa antes de enviar.';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      $('#attendance-photo-status').textContent = 'El archivo debe ser una imagen.';
-      $('#attendance-photo').value = '';
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      $('#attendance-photo-status').textContent = 'La foto es muy grande. Usa una imagen menor a 4 MB.';
-      $('#attendance-photo').value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      attendancePhoto = { name: file.name, mimeType: file.type, data: String(reader.result).split(',')[1] || '' };
-      $('#attendance-photo-status').textContent = `Leyendo foto: ${file.name}…`;
-      await readPhotoWithOcr();
-    };
-    reader.onerror = () => {
-      attendancePhoto = null;
-      $('#attendance-photo-status').textContent = 'No se pudo leer la foto. Intenta de nuevo.';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async function readPhotoWithOcr() {
-    if (!attendancePhoto) return;
-    try {
-      const result = await api('ocrPhoto', { token: session.token, group: session.teacher.group, photo: attendancePhoto });
-      const matchedIds = new Set((result.matched || []).map(item => item.id));
-      document.querySelectorAll('.student-card').forEach((card, index) => {
-        if (!matchedIds.has(students[index].id)) return;
-        card.querySelector('input[value="P"]').checked = true;
-        card.classList.remove('is-absent');
-        card.querySelector('.absence-fields').classList.add('hidden');
-      });
-      updateProgress();
-      $('#attendance-photo-status').textContent = `Foto leída: ${result.matched?.length || 0} presentes detectados. Quedan ${result.notFound?.length || 0} por revisar.`;
-    } catch (error) {
-      $('#attendance-photo-status').textContent = `${error.message} La foto quedará guardada como respaldo, pero revisa la asistencia manualmente.`;
-    }
   }
 
   async function refreshCalendar() {
@@ -214,8 +167,7 @@
       ['Ausentes', result.absent],
       ['Justificadas', result.justified],
       ['Cocina', `${result.kitchen?.totalForKitchen || 0} comidas`],
-      ['Alergias', result.kitchen?.allergiesCount || 0],
-      ['Foto', result.photoUrl ? 'Guardada en Drive' : 'No adjunta']
+      ['Alergias', result.kitchen?.allergiesCount || 0]
     ].map(([label, value]) => `<div class="receipt-row"><span>${label}</span><b>${value}</b></div>`).join('');
     $('#notification-status').textContent = '✓ Reporte enviado a Sandra y a la profesora. Sandra recibe el resumen para cocina.';
     show('success-view');
@@ -237,29 +189,6 @@
       $('#form-error').textContent = error.message;
       setBusy(button, false);
     }
-  }
-
-  function applyPhotoListText() {
-    const text = normalizeText($('#photo-list-text').value);
-    if (!text) {
-      $('#photo-list-result').textContent = 'Pega primero el texto de la foto.';
-      return;
-    }
-    let matched = 0;
-    document.querySelectorAll('.student-card').forEach((card, index) => {
-      const fullName = normalizeText(students[index].name);
-      const parts = fullName.split(' ').filter(part => part.length > 2);
-      const strongMatch = text.includes(fullName);
-      const partialMatch = parts.length >= 2 && parts.filter(part => text.includes(part)).length >= Math.min(2, parts.length);
-      if (strongMatch || partialMatch) {
-        card.querySelector('input[value="P"]').checked = true;
-        card.classList.remove('is-absent');
-        card.querySelector('.absence-fields').classList.add('hidden');
-        matched++;
-      }
-    });
-    updateProgress();
-    $('#photo-list-result').textContent = `Encontrados y marcados presentes: ${matched}. Revisa antes de enviar.`;
   }
 
   $('#login-form').addEventListener('submit', async event => {
@@ -300,11 +229,9 @@
     $('#toggle-code').textContent = input.type === 'password' ? 'Ver' : 'Ocultar';
   });
   $('#group-select').addEventListener('change', event => loadGroup(event.target.value).catch(error => $('#form-error').textContent = error.message));
-  $('#attendance-photo').addEventListener('change', event => readAttendancePhoto(event.target.files?.[0]));
   $('#load-kitchen-summary').addEventListener('click', loadKitchenSummary);
   $('#kitchen-date').addEventListener('change', loadKitchenSummary);
   $('#kitchen-group-select').addEventListener('change', loadKitchenSummary);
-  $('#apply-photo-list').addEventListener('click', applyPhotoListText);
   $('#attendance-date').addEventListener('change', refreshCalendar);
   $('#student-list').addEventListener('change', event => {
     const card = event.target.closest('.student-card');
@@ -340,11 +267,6 @@
     session = null;
     students = [];
     $('#access-code').value = '';
-    $('#photo-list-text').value = '';
-    $('#photo-list-result').textContent = '';
-    $('#attendance-photo').value = '';
-    attendancePhoto = null;
-    $('#attendance-photo-status').textContent = 'Sube una foto para leer nombres y marcar presentes automáticamente. Revisa antes de enviar.';
     show('login-view');
   });
   $('#back-home').addEventListener('click', () => $('#logout').click());
