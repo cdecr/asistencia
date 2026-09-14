@@ -135,7 +135,7 @@
       const result = await api('check', { token: session.token, group: session.teacher.group, date: $('#attendance-date').value });
       const calendar = result.calendar;
       $('#school-year').textContent = `Año lectivo ${calendar.schoolYear}`;
-      $('#block-week').textContent = `${calendar.block} · ${calendar.week}`;
+      $('#block-week').textContent = `Semana ${calendar.schoolWeek || ''} (${calendar.block} · ${calendar.week})`;
       $('#calendar-note').textContent = calendar.month;
     } catch (error) {
       $('#school-year').textContent = 'Fecha no configurada';
